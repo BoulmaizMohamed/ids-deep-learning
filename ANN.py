@@ -5,52 +5,28 @@ Created on Tue Apr 26 20:43:01 2022
 @author: bauhaus
 """
 
+from numpy import savetxt
 import pandas as pd
 import numpy as np 
-from numpy import savetxt
-
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import LabelEncoder
-import keras
-from keras.models import Sequential
-from keras.layers import Dense
-from sklearn.metrics import confusion_matrix
-
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-from keras.models import model_from_yaml
 
 ###############################################################################
-
 #Data Pre-processing
+df = pd.read_csv("ALLdata.csv", on_bad_lines='skip')
 
-df = pd.read_csv("2222.csv", on_bad_lines='skip')
 
-pd.set_option('display.max_columns', None)
-
+from sklearn.preprocessing import LabelEncoder
 encoder = LabelEncoder()
 
 df['proto'] = encoder.fit_transform(df['proto'])
 df['service'] = encoder.fit_transform(df['service'])
 df['state'] = encoder.fit_transform(df['state'])
 
-
-
-df.drop(['attack_cat'], axis = 1, inplace = True) 
-
-
-print(df.dtypes)
-
-
-print(df.head())
-print(df.tail())
+#df.to_csv('ProcessedData.csv', index=False )
 
 ###############################################################################
 # Separating Your Training and Testing Datasets
 
+from sklearn.model_selection import train_test_split
 
 
 X = df[['id','dur','proto','service','state','spkts','dpkts','sbytes','dbytes'
@@ -67,6 +43,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 ###############################################################################
 #Transforming the Data
+from sklearn.preprocessing import StandardScaler
 
 sc = StandardScaler()
 
@@ -75,14 +52,19 @@ X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 ###############################################################################
-#Building the Deep Neural Network
+#Building the Deep artificial Neural Network
+from keras.models import Sequential
+from keras.layers import Dense ,Dropout
 
 classifier = Sequential()
 classifier.add(Dense(40, kernel_initializer = "uniform",activation = "relu", input_dim=43))
+classifier.add(Dense(20, kernel_initializer = "uniform",activation = "relu"))
+classifier.add(Dropout(rate = 0.1))
+classifier.add(Dense(10, kernel_initializer = "uniform",activation = "relu"))
 classifier.add(Dense(1, kernel_initializer = "uniform",activation = "sigmoid"))
-classifier.compile(optimizer= "Adam",loss = "binary_crossentropy",metrics = ["accuracy"])
+classifier.compile(optimizer= "RMSprop",loss = "binary_crossentropy",metrics = ["accuracy"])
 
-classifier.fit(X_train, y_train, batch_size = 10, epochs = 50)
+classifier.fit(X_train, y_train, batch_size = 10, epochs = 1)
 
 ###############################################################################
 #Running Predictions and evaluation on the Test Set
@@ -90,50 +72,37 @@ classifier.fit(X_train, y_train, batch_size = 10, epochs = 50)
 
 acc=classifier.evaluate(X_test, y_test, batch_size=10 ,verbose=1)
 
-#print("%s: %.2f%%" % (classifier.metrics_names[1], score[1]*100))
-y=classifier.predict([[1,0.121478,113,0,3,6,4,258,172,74.08749,252,254,14158.94238,8495.365234,0,0,24.2956,8.375,30.177547,11.830604,255,621772692,2202533631,255,0,0,0,43,43,0,0,1,0,1,1,1,1,0,0,0,1,1,0]])
-print("****************test")
-print(y)
-
-
 y_pred = classifier.predict(X_test)
+
 print(y_pred)
 
-print(classifier.summary())
-from keras.utils.vis_utils import plot_model
-plot_model(classifier, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
-#savetxt('result.csv', y_pred , delimiter=',')
+###############################################################################
+# Checking the Confusion Matrix 
 
-
-print('************************************************************************')
-
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
 
 y_pred = (y_pred > 0.5)
 
-
-
-yhat = classifier.predict(X_test)
-# round probabilities to class labels
-yhat = yhat.round()
-print(yhat)
-"""
-savetxt('20.csv', X_test, delimiter=',')
-savetxt('21.csv', yhat, delimiter=',')
-"""
-###############################################################################
-# Checking the Confusion Matrix
-
-
 cm = confusion_matrix(y_test, y_pred)
-"""
-plt.figure()
-sns.heatmap(pd.crosstab(y_test, y_pred) , annot=True , fmt='d')
-plt.xlabel('target')
-plt.ylabel('outcome')
-plt.show()
-"""
+print(cm)
+
+print(f1_score(y_test, y_pred))
+
+###############################################################################
+# Drow neural network
+
+from keras.utils.vis_utils import plot_model
+
+plot_model(classifier, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+
 ###############################################################################
 # save model
 
-#classifier.save_weights('Modelw.h5')
+classifier.save('Model.h5')
+
+
+
+
+
 

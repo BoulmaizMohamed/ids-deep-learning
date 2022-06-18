@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>Intrusion Detection System</title>
+  <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+</head>
+
+<body>
+	
+	
+	
+ <div class="login">
+	<h1> Predict Intrusion : </h1>
+	<br><br>
+	<input type="file" name="json" id="json" class="btn"/>
+	<br><br><br><br>
+    <button onclick="handleRequest()"  class="btn btn-primary btn-lg btn-block">predict</button>
+    
+	<h1>The result is:</h1> 
+
+	<h2><span id="reponse"></span></h2>
+
+	<script>
+
+        
+        
+    
+
+		function handleRequest() {
+			var json = document.getElementById("json")
+			var file_to_read = document.getElementById("json").files[0];
+			var fileread = new FileReader();
+			fileread.onload = function(e) {
+				var content = e.target.result;
+				var intern = JSON.parse(content);
+				axios.post("http://127.0.0.1:8000/predict",intern).then(function (response) {
+					var reponseSpan = document.getElementById("reponse")
+					reponseSpan.innerHTML = response.data['prediction']
+					})
+				}
+				fileread.readAsText(file_to_read);
+		  };
+		  
+		
+					
+			</script>
+
+</div>
